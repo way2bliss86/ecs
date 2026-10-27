@@ -683,12 +683,17 @@ function openLb(a,i){
   lb.hidden=false;document.body.style.overflow='hidden';showLb(i);document.getElementById('lbClose').focus();
 }
 const isTouchUI=()=>innerWidth<=620||matchMedia('(hover:none) and (pointer:coarse)').matches;
+let lbOff=0;                               // vertical offset of the photo area centre from the screen centre
 function fitLb(){
-  if(!lbAlbum)return;const p=lbAlbum.photos[lbI];
-  let s;
-  if(isTouchUI()){s=Math.min(innerWidth/p.w,innerHeight/p.h)}          // fill the screen like a phone gallery
-  else{const W=Math.min(innerWidth*.74,1040),H=innerHeight-270;s=Math.min(W/p.w,H/p.h,1.5)}
+  if(!lbAlbum)return;const p=lbAlbum.photos[lbI],touch=isTouchUI();
+  const topH=lb.querySelector('.lb-top').offsetHeight,botH=lb.querySelector('.lb-bottom').offsetHeight;
+  const gap=touch?0:16;
+  // photo area = space between the top bar and the bottom strip (and between the arrows on desktop)
+  const W=touch?innerWidth:Math.min(innerWidth-2*(Math.max(20,innerWidth*.03)+76),1200);
+  const H=Math.max(120,innerHeight-topH-botH-2*gap);
+  let s=Math.min(W/p.w,H/p.h);if(!touch)s=Math.min(s,1.5);
   lbImg.style.width=Math.round(p.w*s)+'px';lbImg.style.height=Math.round(p.h*s)+'px';
+  lbOff=(topH-botH)/2;lb.querySelector('.lb-fig').style.marginTop=(topH-botH)+'px';
 }
 function showLb(i,dir){
   const N=lbAlbum.photos.length;lbI=(i+N)%N;const p=lbAlbum.photos[lbI];
@@ -719,8 +724,11 @@ function applyZoom(anim){
 }
 function clampPan(){
   const w=lbImg.offsetWidth,h=lbImg.offsetHeight,W=lbStage.clientWidth,H=lbStage.clientHeight;
-  const mx=Math.max(0,(w*zs-W)/2),my=Math.max(0,(h*zs-H)/2);
-  zx=Math.max(-mx,Math.min(mx,zx));zy=Math.max(-my,Math.min(my,zy));
+  const mx=Math.max(0,(w*zs-W)/2);
+  zx=Math.max(-mx,Math.min(mx,zx));
+  // vertical: photo centre sits lbOff below screen centre; once taller than the screen it may pan to either screen edge
+  if(h*zs<=H){zy=Math.max(-lbOff-(H-h*zs)/2,Math.min(-lbOff+(H-h*zs)/2,zy));if(zs<=1)zy=0}
+  else{const lo=H/2-lbOff-h*zs/2,hi=h*zs/2-H/2-lbOff;zy=Math.max(lo,Math.min(hi,zy))}
 }
 function resetZoom(anim){zs=1;zx=0;zy=0;applyZoom(anim)}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
