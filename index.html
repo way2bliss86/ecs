@@ -349,11 +349,8 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
 
 .lb-stage{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .lb-stage.dragging{cursor:grabbing}
-.lb-frame{overflow:hidden}
 .lb-frame img{transform-origin:center center;will-change:transform}
-.lb-stage.zoomed .lb-frame{box-shadow:0 0 0 1px rgba(220,234,243,.9)}
-.lb-hint{display:none}
-@media (max-width:620px),(hover:none) and (pointer:coarse){#lbPrev,#lbNext{display:none!important}.lb-stage{padding:8px 12px!important}.lb-hint{display:block;text-align:center;font-size:12.5px;color:var(--muted);margin-top:-4px}}
+@media (max-width:620px),(hover:none) and (pointer:coarse){#lbPrev,#lbNext{display:none!important}}
 .lb-stage img{-webkit-user-drag:none;pointer-events:none}
 .lb-frame img.in-r{animation:inR .32s cubic-bezier(.2,.7,.2,1) both}
 .lb-frame img.in-l{animation:inL .32s cubic-bezier(.2,.7,.2,1) both}
@@ -399,6 +396,21 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
   .info-list{grid-template-columns:1fr}
   .info-list dd{margin-bottom:8px}
 }
+
+/* viewer v3: photo only, full-screen stage, overlaid chrome that hides while zoomed */
+.lb-stage{position:absolute;inset:0;padding:0!important;overflow:hidden;z-index:1}
+.lb-fig{gap:0}
+.lb-frame{background:none;padding:0;border-radius:0;box-shadow:none}
+.lb-frame img{border-radius:0}
+.lb-top,.lb-bottom{position:absolute;left:0;right:0;z-index:2;transition:opacity .22s ease}
+.lb-top{top:0;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+.lb-bottom{bottom:0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+.lb-arrow{z-index:3;transition:opacity .22s ease,background .2s,color .2s}
+.lb.zoomed .lb-top,.lb.zoomed .lb-bottom,.lb.zoomed .lb-arrow{opacity:0;pointer-events:none}
+@media (max-width:620px),(hover:none) and (pointer:coarse){
+  .lb-top{padding:calc(12px + env(safe-area-inset-top,0px)) 16px 22px;background:linear-gradient(180deg,rgba(246,250,253,.96) 55%,rgba(246,250,253,0))}
+  .lb-bottom{padding:22px 12px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(246,250,253,.96) 60%,rgba(246,250,253,0))}
+}
 </style>
 
 <header class="gnb" id="gnb">
@@ -435,7 +447,7 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
     <figure class="lb-fig"><span class="lb-frame"><img id="lbImg" alt=""></span></figure>
     <button class="lb-arrow" id="lbNext" aria-label="다음 사진"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
-  <div class="lb-bottom"><p class="lb-hint">옆으로 밀어 넘기기 · 두 손가락으로 확대</p><div class="lb-prog"><i id="lbProg"></i></div><div class="lb-thumbs" id="lbThumbs"></div></div>
+  <div class="lb-bottom"><div class="lb-prog"><i id="lbProg"></i></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 </div>
 
 <section class="support"><div class="wrap">
@@ -670,10 +682,13 @@ function openLb(a,i){
   lbThumbs.querySelectorAll('button').forEach(b=>b.onclick=()=>showLb(+b.dataset.i));
   lb.hidden=false;document.body.style.overflow='hidden';showLb(i);document.getElementById('lbClose').focus();
 }
+const isTouchUI=()=>innerWidth<=620||matchMedia('(hover:none) and (pointer:coarse)').matches;
 function fitLb(){
-  if(!lbAlbum)return;const p=lbAlbum.photos[lbI],mob=innerWidth<=620;
-  const W=mob?innerWidth-36:Math.min(innerWidth*.74,1040),H=innerHeight-(mob?300:290);
-  const s=Math.min(W/p.w,H/p.h,1.5);lbImg.style.width=Math.round(p.w*s)+'px';lbImg.style.height=Math.round(p.h*s)+'px';
+  if(!lbAlbum)return;const p=lbAlbum.photos[lbI];
+  let s;
+  if(isTouchUI()){s=Math.min(innerWidth/p.w,innerHeight/p.h)}          // fill the screen like a phone gallery
+  else{const W=Math.min(innerWidth*.74,1040),H=innerHeight-270;s=Math.min(W/p.w,H/p.h,1.5)}
+  lbImg.style.width=Math.round(p.w*s)+'px';lbImg.style.height=Math.round(p.h*s)+'px';
 }
 function showLb(i,dir){
   const N=lbAlbum.photos.length;lbI=(i+N)%N;const p=lbAlbum.photos[lbI];
@@ -700,10 +715,11 @@ function applyZoom(anim){
   if(zs>1||anim)lbImg.classList.remove('swap','in-l','in-r');
   lbImg.style.transition=anim?'transform .25s ease':'none';
   lbImg.style.transform=zs>1?`translate(${zx}px,${zy}px) scale(${zs})`:'';
-  lbStage.classList.toggle('zoomed',zs>1);
+  lb.classList.toggle('zoomed',zs>1);
 }
 function clampPan(){
-  const w=lbImg.offsetWidth,h=lbImg.offsetHeight,mx=(w*zs-w)/2,my=(h*zs-h)/2;
+  const w=lbImg.offsetWidth,h=lbImg.offsetHeight,W=lbStage.clientWidth,H=lbStage.clientHeight;
+  const mx=Math.max(0,(w*zs-W)/2),my=Math.max(0,(h*zs-H)/2);
   zx=Math.max(-mx,Math.min(mx,zx));zy=Math.max(-my,Math.min(my,zy));
 }
 function resetZoom(anim){zs=1;zx=0;zy=0;applyZoom(anim)}
