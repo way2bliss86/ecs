@@ -435,7 +435,45 @@ a.vcard:hover .vplay,.vplayer-btn:hover .vplay{transform:translate(-50%,-50%) sc
 .vplayer iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .vactions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
 .vactions .btn{display:inline-flex;align-items:center;gap:8px}
-@media (max-width:620px){.vplayer{border-radius:14px}.vplayer .vplay{width:72px;height:72px}.vplay.sm{width:50px;height:50px}}
+@media (max-width:620px){.vhint{display:none}.vplayer{border-radius:14px}.vplayer .vplay{width:72px;height:72px}.vplay.sm{width:50px;height:50px}}
+
+.vposter-no{position:absolute;right:6%;top:8%;font-family:var(--f-latin);font-weight:700;font-size:clamp(28px,5vw,64px);color:rgba(255,255,255,.28);line-height:1}
+.vp1 .vposter-bg{background:radial-gradient(60% 80% at 20% 20%,rgba(255,214,150,.45),transparent 60%),linear-gradient(135deg,#2a6c8f 0%,#3f97b8 55%,#9fd3e6 100%)}
+.vp2 .vposter-bg{background:radial-gradient(60% 80% at 75% 25%,rgba(255,170,120,.45),transparent 60%),linear-gradient(135deg,#3b4f8f 0%,#5b6fc0 55%,#a9b8ef 100%)}
+.vp3 .vposter-bg{background:radial-gradient(60% 80% at 30% 80%,rgba(190,235,170,.45),transparent 60%),linear-gradient(135deg,#25665e 0%,#3c958a 55%,#9ed8c9 100%)}
+.vnav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-top:28px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.vnav-btn{display:flex;align-items:center;gap:14px;min-width:0;border-radius:14px;padding:10px 12px;transition:background .2s}
+.vnav-btn.r{justify-content:flex-end;text-align:right}
+a.vnav-btn:hover{background:var(--sky-warm)}
+a.vnav-btn:hover .ar{background:var(--navy);color:#fff}
+.vnav-btn .ar{flex-shrink:0;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:24px;line-height:1;background:#fff;color:var(--navy);box-shadow:0 6px 16px -10px rgba(31,79,138,.6),0 0 0 1px var(--line);transition:background .2s,color .2s}
+.vnav-btn>span:not(.ar){display:flex;flex-direction:column;min-width:0}
+.vnav-btn small{color:var(--muted);font-size:13px}
+.vnav-btn b{color:var(--navy);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vnav-btn.off{opacity:.4}
+.vnav-count{font-family:var(--f-latin);font-size:17px;color:#9fb3c8;font-weight:600;font-variant-numeric:tabular-nums}
+.vnav-count b{font-size:26px;color:var(--navy)}
+.vlist-head{display:flex;justify-content:space-between;align-items:baseline;margin:36px 0 14px}
+.vlist-head h3{margin:0!important;font-size:20px}
+.vlist{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:16px;overflow-x:auto;padding:6px 6px 14px;margin:0 -6px;scrollbar-width:thin}
+.vli{display:flex;flex-direction:column;gap:6px;min-width:0}
+.vth{position:relative;display:block;aspect-ratio:16/9;border-radius:12px;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.vli:hover .vth{transform:translateY(-2px)}
+.vli.on .vth{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--navy)}
+.vplay.xs{width:40px;height:40px}
+.vplay.xs svg{width:17px;height:17px}
+.vli:hover .vplay{background:var(--accent);color:#fff}
+.vli .now{position:absolute;left:8px;top:8px;z-index:2;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px}
+.vli-t{font-weight:700;font-size:15px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.vli.on .vli-t{color:var(--navy)}
+.vli small{color:var(--muted);font-family:var(--f-latin);font-size:14px}
+.vli .vposter-mark{display:none}
+.vli .vposter-no{font-size:30px;top:auto;bottom:8%}
+@media (max-width:620px){
+  .vnav{grid-template-columns:1fr 1fr;gap:8px}.vnav-count{display:none}
+  .vnav-btn{padding:8px 4px;gap:10px}.vnav-btn .ar{width:38px;height:38px}
+  .vlist{grid-auto-columns:minmax(200px,72%)}
+}
 </style>
 
 <header class="gnb" id="gnb">
@@ -620,7 +658,10 @@ function albumPage(a){
 
 /* ----- video gallery (YouTube) ----- */
 const VIDEOS=[
- {id:'video-1',yt:'qyF6Ic-oJfM',t:'유튜브 연동 샘플 영상',d:'2026.10.27',p:'유튜브에 올린 학교 영상을 홈페이지에서 함께 볼 수 있습니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
+ {id:'video-1',yt:'qyF6Ic-oJfM',t:'유튜브 연동 샘플 영상 1',d:'2026.10.27',p:'유튜브에 올린 학교 영상을 홈페이지에서 함께 볼 수 있습니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
+ {id:'video-2',yt:'KqE1FRk_zik',t:'유튜브 연동 샘플 영상 2',d:'2026.10.20',p:'두 번째 샘플 영상입니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
+ {id:'video-3',yt:'EoFSKSKn-hk',t:'유튜브 연동 샘플 영상 3',d:'2026.10.13',p:'세 번째 샘플 영상입니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
+ {id:'video-4',yt:'ekAlwbFqhk0',t:'유튜브 연동 샘플 영상 4',d:'2026.10.06',p:'네 번째 샘플 영상입니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
 ];
 // The artifact preview cannot embed other sites, so there the player opens YouTube in a new tab.
 // On the school's own website the same button plays the video in place.
@@ -629,18 +670,23 @@ const ytWatch=v=>`https://www.youtube.com/watch?v=${v.yt}`;
 const ytThumb=(v,q)=>`https://i.ytimg.com/vi/${v.yt}/${q||'hqdefault'}.jpg`;
 const playIcon='<svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
 const ytMark='<svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#ff0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>';
-function poster(v,q){return `<span class="vposter"><span class="vposter-bg"><span class="vposter-mark">EVERLOVE<br>FILM</span></span><img src="${ytThumb(v,q)}" alt="" loading="lazy" onerror="this.remove()"></span>`}
+function poster(v,q){const n=VIDEOS.indexOf(v);return `<span class="vposter vp${n%4}"><span class="vposter-bg"><span class="vposter-mark">EVERLOVE<br>FILM</span><span class="vposter-no">${String(n+1).padStart(2,'0')}</span></span><img src="${ytThumb(v,q)}" alt="" loading="lazy" onerror="this.remove()"></span>`}
 function videoCard(v){
   return `<a href="#${v.id}" class="alb vcard"><span class="th">${poster(v)}<span class="vplay sm">${playIcon}</span><span class="cnt-badge yt">${ytMark}YouTube</span></span><span class="cap"><b>${v.t}</b><small>${v.d}</small></span><span class="vdesc">${v.p}</span></a>`;
 }
 function videoPage(v){
+  const i=VIDEOS.indexOf(v),prev=VIDEOS[i-1],next=VIDEOS[i+1];
   const tag=CAN_EMBED?'button':'a',attrs=CAN_EMBED?`type="button" data-yt="${v.yt}"`:`href="${ytWatch(v)}" target="_blank" rel="noopener"`;
   return `<a class="back" href="#videos">← 목록으로</a>
   <div class="album-head"><div><span class="eyebrow">Video</span><h2>${v.t}</h2><p class="album-meta"><span>${v.d}</span><span class="ytm">${ytMark} YouTube</span></p></div></div>
   <p class="album-desc">${v.p}</p>
   <div class="vplayer" id="vplayer"><${tag} class="vplayer-btn" ${attrs} aria-label="${v.t} 재생">${poster(v,'maxresdefault')}<span class="vshade"></span><span class="vplay">${playIcon}</span><span class="vhint">${CAN_EMBED?'눌러서 재생':'YouTube에서 재생'}</span></${tag}></div>
   <div class="vactions"><a class="btn btn-accent" href="${ytWatch(v)}" target="_blank" rel="noopener">${ytMark} 유튜브에서 보기</a><button class="btn btn-line" data-copy="${ytWatch(v)}">링크 복사</button></div>
-  <nav class="album-nav" aria-label="다른 영상"><span></span><a class="list" href="#videos">목록</a><span></span></nav>`;
+  <nav class="album-nav" aria-label="다른 영상">
+    ${prev?`<a href="#${prev.id}"><small>이전 영상</small><b>← ${prev.t}</b></a>`:'<span></span>'}
+    <a class="list" href="#videos">목록</a>
+    ${next?`<a href="#${next.id}" class="r"><small>다음 영상</small><b>${next.t} →</b></a>`:'<span></span>'}
+  </nav>`;
 }
 function bindVideo(){
   const b=app.querySelector('.vplayer-btn[data-yt]');if(!b)return;
