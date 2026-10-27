@@ -411,6 +411,34 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
   .lb-top{padding:calc(12px + env(safe-area-inset-top,0px)) 16px 22px;background:linear-gradient(180deg,rgba(246,250,253,.96) 55%,rgba(246,250,253,0))}
   .lb-bottom{padding:22px 12px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(246,250,253,.96) 60%,rgba(246,250,253,0))}
 }
+
+/* video gallery */
+.vposter{position:absolute;inset:0;display:block;overflow:hidden}
+.vposter-bg{position:absolute;inset:0;display:grid;place-items:center;background:
+  radial-gradient(60% 80% at 80% 20%,rgba(240,136,74,.35),transparent 60%),
+  radial-gradient(70% 90% at 15% 90%,rgba(141,196,239,.55),transparent 60%),
+  linear-gradient(135deg,#1f4f8a 0%,#2f6fb5 55%,#7fb6e4 100%)}
+.vposter-mark{position:absolute;left:6%;top:9%;font-family:var(--f-latin);font-weight:700;letter-spacing:.28em;color:rgba(255,255,255,.55);font-size:clamp(12px,1.6vw,20px);line-height:1.35;text-align:left}
+.vposter img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vcard .th{position:relative;aspect-ratio:16/9!important}
+.vplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.95);color:var(--accent);display:grid;place-items:center;box-shadow:0 14px 34px -12px rgba(15,35,70,.55);transition:transform .25s ease,background .2s,color .2s;z-index:2}
+.vplay svg{margin-left:4px}
+.vplay.sm{width:58px;height:58px}
+.vplay.sm svg{width:24px;height:24px}
+a.vcard:hover .vplay,.vplayer-btn:hover .vplay{transform:translate(-50%,-50%) scale(1.08);background:var(--accent);color:#fff}
+.cnt-badge.yt{display:inline-flex;align-items:center;gap:6px;z-index:2}
+.vdesc{display:block;padding:0 18px 18px;margin-top:-6px;color:var(--muted);font-size:14.5px;line-height:1.6}
+.ytm{display:inline-flex;align-items:center;gap:6px}
+.vplayer{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:20px;overflow:hidden;background:#0f1b2d;box-shadow:0 30px 60px -34px rgba(31,79,138,.6)}
+.vplayer-btn{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;cursor:pointer}
+.vshade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,25,50,0) 45%,rgba(10,25,50,.55));z-index:1}
+.vplayer .vplay{width:96px;height:96px}
+.vplayer .vplay svg{width:38px;height:38px}
+.vhint{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#fff;font-weight:700;font-size:15px;letter-spacing:.02em;z-index:2;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.vplayer iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vactions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.vactions .btn{display:inline-flex;align-items:center;gap:8px}
+@media (max-width:620px){.vplayer{border-radius:14px}.vplayer .vplay{width:72px;height:72px}.vplay.sm{width:50px;height:50px}}
 </style>
 
 <header class="gnb" id="gnb">
@@ -589,6 +617,36 @@ function albumPage(a){
   </nav>`;
 }
 
+
+/* ----- video gallery (YouTube) ----- */
+const VIDEOS=[
+ {id:'video-1',yt:'87HloJbZ5T0',t:'유튜브 연동 샘플 영상',d:'2026.10.27',p:'유튜브에 올린 학교 영상을 홈페이지에서 함께 볼 수 있습니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
+];
+// The artifact preview cannot embed other sites, so there the player opens YouTube in a new tab.
+// On the school's own website the same button plays the video in place.
+const CAN_EMBED=!/claude/.test(location.hostname)&&location.protocol.startsWith('http');
+const ytWatch=v=>`https://www.youtube.com/watch?v=${v.yt}`;
+const ytThumb=(v,q)=>`https://i.ytimg.com/vi/${v.yt}/${q||'hqdefault'}.jpg`;
+const playIcon='<svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
+const ytMark='<svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#ff0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>';
+function poster(v,q){return `<span class="vposter"><span class="vposter-bg"><span class="vposter-mark">EVERLOVE<br>FILM</span></span><img src="${ytThumb(v,q)}" alt="" loading="lazy" onerror="this.remove()"></span>`}
+function videoCard(v){
+  return `<a href="#${v.id}" class="alb vcard"><span class="th">${poster(v)}<span class="vplay sm">${playIcon}</span><span class="cnt-badge yt">${ytMark}YouTube</span></span><span class="cap"><b>${v.t}</b><small>${v.d}</small></span><span class="vdesc">${v.p}</span></a>`;
+}
+function videoPage(v){
+  const tag=CAN_EMBED?'button':'a',attrs=CAN_EMBED?`type="button" data-yt="${v.yt}"`:`href="${ytWatch(v)}" target="_blank" rel="noopener"`;
+  return `<a class="back" href="#videos">← 목록으로</a>
+  <div class="album-head"><div><span class="eyebrow">Video</span><h2>${v.t}</h2><p class="album-meta"><span>${v.d}</span><span class="ytm">${ytMark} YouTube</span></p></div></div>
+  <p class="album-desc">${v.p}</p>
+  <div class="vplayer" id="vplayer"><${tag} class="vplayer-btn" ${attrs} aria-label="${v.t} 재생">${poster(v,'maxresdefault')}<span class="vshade"></span><span class="vplay">${playIcon}</span><span class="vhint">${CAN_EMBED?'눌러서 재생':'YouTube에서 재생'}</span></${tag}></div>
+  <div class="vactions"><a class="btn btn-accent" href="${ytWatch(v)}" target="_blank" rel="noopener">${ytMark} 유튜브에서 보기</a><button class="btn btn-line" data-copy="${ytWatch(v)}">링크 복사</button></div>
+  <nav class="album-nav" aria-label="다른 영상"><span></span><a class="list" href="#videos">목록</a><span></span></nav>`;
+}
+function bindVideo(){
+  const b=app.querySelector('.vplayer-btn[data-yt]');if(!b)return;
+  b.onclick=()=>{document.getElementById('vplayer').innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${b.dataset.yt}?autoplay=1&rel=0&playsinline=1" title="YouTube 동영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`};
+}
+
 /* ----- sub pages ----- */
 const S='<div class="sample">✎ 예시 내용입니다. 실제 학교 내용으로 교체해 주세요.</div>';
 const PAGES={
@@ -628,7 +686,7 @@ const PAGES={
  syllabus:()=>`${S}<h2>수업계획서</h2>${list([['2026-2학기 국어 수업계획서','2026.08.28'],['2026-2학기 수학 수업계획서','2026.08.28'],['2026-2학기 성경 수업계획서','2026.08.27'],['2026-2학기 영어 수업계획서','2026.08.27']])}`,
  audio:()=>`${S}<h2>오디오 자료실</h2>${[['10월 넷째 주 경건회 말씀','2026.10.23 · 18:42'],['학생 찬양팀 연습곡','2026.10.15 · 05:10'],['학부모 교육 녹음본','2026.10.07 · 52:08']].map(a=>`<div class="audio-row"><button aria-label="${a[0]} 재생">▶</button><div><b>${a[0]}</b><br><small>${a[1]}</small></div></div>`).join('')}`,
  photos:()=>`<div class="gal-top"><h2>사진 갤러리</h2><span class="muted">앨범 ${ALBUMS.length}개</span></div><div class="gal gal-2">${galItems().join('')}</div>`,
- videos:()=>`${S}<h2>동영상 갤러리</h2><div class="gal">${[[IMG2,'찬양 예배 실황','2026.07'],[IMG1,'봄 소풍 스케치','2026.04'],[null,'성탄 발표회','2025.12'],[null,'입학 예배','2026.03']].map(v=>`<a href="#videos" class="vid"><span class="th" style="position:relative">${v[0]?`<img src="${v[0]}" alt="${v[1]}">`:icon.cam}<span class="play"><i>▶</i></span></span><span class="cap"><b>${v[1]}</b><small>${v[2]}</small></span></a>`).join('')}</div>`,
+ videos:()=>`<div class="gal-top"><h2>동영상 갤러리</h2><span class="muted">영상 ${VIDEOS.length}개</span></div><div class="gal gal-2">${VIDEOS.map(videoCard).join('')}</div>`,
  notices:()=>`${S}<h2>공지사항</h2>${list(NOTICES.map(n=>[n[1],n[2]]))}`,
  weekly:()=>`${S}<h2>Weekly Letter</h2>${list(WEEKLY.map(w=>[`[${w[0]}] ${w[1]}`,w[2]]))}`,
 };
@@ -642,14 +700,15 @@ let timer=null,cur=0,paused=false;
 function render(){
   const t=(location.hash||'#home').slice(1)||'home';
   gnb.classList.remove('open-mega');drawer.hidden=true;clearInterval(timer);
-  const album=ALBUMS.find(a=>a.id===t);
-  const f=album?find('photos'):find(t);
+  const album=ALBUMS.find(a=>a.id===t),video=VIDEOS.find(v=>v.id===t),detail=album||video;
+  const f=album?find('photos'):video?find('videos'):find(t);
   menu.querySelectorAll('a').forEach(a=>a.classList.toggle('on',!!f&&a.dataset.sec===f.sec.id));
-  if(!f||(!album&&!PAGES[t])){app.innerHTML=home();initSlider();window.scrollTo(0,0);return}
-  app.innerHTML=`<section class="subvis"><div class="wrap"><span class="eyebrow">${f.sec.en}</span><h1>${f.item[1]}</h1><div class="crumb"><span>홈</span><span>${f.sec.name}</span><span>${f.item[1]}</span>${album?`<span>${album.t}</span>`:''}</div></div></section>
-  <nav class="tabs" aria-label="${f.sec.name} 하위 메뉴"><div class="wrap">${f.sec.items.map(i=>`<a href="#${i[0]}" class="${i[0]===(album?'photos':t)?'on':''}">${i[1]}</a>`).join('')}</div></nav>
-  <div class="wrap content">${album?albumPage(album):PAGES[t]()}</div>`;
+  if(!f||(!detail&&!PAGES[t])){app.innerHTML=home();initSlider();window.scrollTo(0,0);return}
+  app.innerHTML=`<section class="subvis"><div class="wrap"><span class="eyebrow">${f.sec.en}</span><h1>${f.item[1]}</h1><div class="crumb"><span>홈</span><span>${f.sec.name}</span><span>${f.item[1]}</span>${detail?`<span>${detail.t}</span>`:''}</div></div></section>
+  <nav class="tabs" aria-label="${f.sec.name} 하위 메뉴"><div class="wrap">${f.sec.items.map(i=>`<a href="#${i[0]}" class="${i[0]===(album?'photos':video?'videos':t)?'on':''}">${i[1]}</a>`).join('')}</div></nav>
+  <div class="wrap content">${album?albumPage(album):video?videoPage(video):PAGES[t]()}</div>`;
   if(album)bindAlbum(album);
+  if(video)bindVideo();
   window.scrollTo(0,0);
 }
 function initSlider(){
