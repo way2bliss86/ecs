@@ -347,8 +347,13 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
 @media (max-width:900px){.album-grid{column-count:3}}
 @media (max-width:620px){.album-grid{column-count:2;column-gap:10px}.ph{margin-bottom:10px}.gal.gal-2{grid-template-columns:1fr}.lb-top{gap:12px;padding:16px 16px 6px}.lb-head b{font-size:17px}.lb-count b{font-size:26px}.lb-close{width:42px;height:42px}.lb-stage{position:relative;padding:8px 12px;gap:0}.lb-frame{padding:6px;border-radius:14px}.lb-frame img{border-radius:9px}.lb-arrow{width:40px;height:40px}.lb-arrow:hover{transform:none}#lbPrev{left:4px;margin-top:-20px}#lbNext{right:4px;margin-top:-20px}.lb-thumbs button{width:60px;height:42px}.album-nav{grid-template-columns:1fr 1fr}.album-nav .list{display:none}}
 
-.lb-stage{touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+.lb-stage{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .lb-stage.dragging{cursor:grabbing}
+.lb-frame{overflow:hidden}
+.lb-frame img{transform-origin:center center;will-change:transform}
+.lb-stage.zoomed .lb-frame{box-shadow:0 0 0 1px rgba(220,234,243,.9)}
+.lb-hint{display:none}
+@media (max-width:620px),(hover:none) and (pointer:coarse){#lbPrev,#lbNext{display:none!important}.lb-stage{padding:8px 12px!important}.lb-hint{display:block;text-align:center;font-size:12.5px;color:var(--muted);margin-top:-4px}}
 .lb-stage img{-webkit-user-drag:none;pointer-events:none}
 .lb-frame img.in-r{animation:inR .32s cubic-bezier(.2,.7,.2,1) both}
 .lb-frame img.in-l{animation:inL .32s cubic-bezier(.2,.7,.2,1) both}
@@ -430,7 +435,7 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
     <figure class="lb-fig"><span class="lb-frame"><img id="lbImg" alt=""></span></figure>
     <button class="lb-arrow" id="lbNext" aria-label="다음 사진"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
-  <div class="lb-bottom"><div class="lb-prog"><i id="lbProg"></i></div><div class="lb-thumbs" id="lbThumbs"></div></div>
+  <div class="lb-bottom"><p class="lb-hint">옆으로 밀어 넘기기 · 두 손가락으로 확대</p><div class="lb-prog"><i id="lbProg"></i></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 </div>
 
 <section class="support"><div class="wrap">
@@ -672,7 +677,7 @@ function fitLb(){
 }
 function showLb(i,dir){
   const N=lbAlbum.photos.length;lbI=(i+N)%N;const p=lbAlbum.photos[lbI];
-  lbImg.src=p.src;lbImg.alt=p.c;fitLb();
+  resetZoom(false);lbImg.src=p.src;lbImg.alt=p.c;fitLb();
   const nn=String(lbI+1).padStart(2,'0');document.getElementById('lbCur').textContent=nn;
     document.getElementById('lbProg').style.width=((lbI+1)/N*100)+'%';
   lbImg.classList.remove('swap','in-l','in-r');void lbImg.offsetWidth;lbImg.classList.add(dir===1?'in-r':dir===-1?'in-l':'swap');
@@ -681,38 +686,90 @@ function showLb(i,dir){
   [lbI+1,lbI-1].forEach(k=>{const q=lbAlbum.photos[(k+N)%N];const im=new Image();im.src=q.src});
 }
 addEventListener('resize',fitLb);
-function closeLb(){lb.hidden=true;document.body.style.overflow='';if(lastFocus)lastFocus.focus()}
+function closeLb(){resetZoom(false);lb.hidden=true;document.body.style.overflow='';if(lastFocus)lastFocus.focus()}
 document.getElementById('lbClose').onclick=closeLb;
 document.getElementById('lbPrev').onclick=()=>showLb(lbI-1,-1);
 document.getElementById('lbNext').onclick=()=>showLb(lbI+1,1);
 document.addEventListener('keydown',e=>{if(lb.hidden)return;if(e.key==='Escape')closeLb();if(e.key==='ArrowLeft')showLb(lbI-1,-1);if(e.key==='ArrowRight')showLb(lbI+1,1)});
-/* drag / swipe: mouse and touch via pointer events */
+/* gestures: swipe / drag to change photo, pinch to zoom, drag to pan while zoomed, double-tap to zoom */
 const lbStage=lb.querySelector('.lb-stage'),lbFrame=lb.querySelector('.lb-frame');
-let drag=null;
 lbImg.draggable=false;
+const pts=new Map();let mode=null,g={};
+let zs=1,zx=0,zy=0;                       // zoom scale and pan offset
+function applyZoom(anim){
+  if(zs>1||anim)lbImg.classList.remove('swap','in-l','in-r');
+  lbImg.style.transition=anim?'transform .25s ease':'none';
+  lbImg.style.transform=zs>1?`translate(${zx}px,${zy}px) scale(${zs})`:'';
+  lbStage.classList.toggle('zoomed',zs>1);
+}
+function clampPan(){
+  const w=lbImg.offsetWidth,h=lbImg.offsetHeight,mx=(w*zs-w)/2,my=(h*zs-h)/2;
+  zx=Math.max(-mx,Math.min(mx,zx));zy=Math.max(-my,Math.min(my,zy));
+}
+function resetZoom(anim){zs=1;zx=0;zy=0;applyZoom(anim)}
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+let lastTap=0;
 lbStage.addEventListener('pointerdown',e=>{
-  if(e.button!==0||e.target.closest('button'))return;
-  drag={x:e.clientX,y:e.clientY,dx:0,id:e.pointerId,t:performance.now()};
-  lbStage.setPointerCapture(e.pointerId);lbFrame.style.transition='none';lbStage.classList.add('dragging');
+  if(e.target.closest('button'))return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  lbStage.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){                      // start pinch
+    const [p1,p2]=[...pts.values()];
+    lbFrame.style.transition='transform .2s ease, opacity .2s ease';lbFrame.style.transform='';lbFrame.style.opacity='';
+    mode='pinch';g={d0:dist(p1,p2),s0:zs,m0:mid(p1,p2),x0:zx,y0:zy};return;
+  }
+  if(pts.size>2)return;
+  const now=performance.now();
+  if(now-lastTap<300&&e.pointerType!=='mouse'){  // double tap toggles zoom
+    lastTap=0;mode=null;
+    if(zs>1)resetZoom(true);else{zs=2.2;zx=0;zy=0;applyZoom(true)}
+    return;
+  }
+  lastTap=now;
+  if(zs>1){mode='pan';g={x:e.clientX,y:e.clientY,x0:zx,y0:zy};lbStage.classList.add('dragging');return}
+  mode='swipe';g={x:e.clientX,dx:0,t:now};lbFrame.style.transition='none';lbStage.classList.add('dragging');
 });
 lbStage.addEventListener('pointermove',e=>{
-  if(!drag||e.pointerId!==drag.id)return;
-  drag.dx=e.clientX-drag.x;
-  lbFrame.style.transform=`translateX(${drag.dx}px) rotate(${drag.dx/60}deg)`;
-  lbFrame.style.opacity=String(Math.max(.4,1-Math.abs(drag.dx)/700));
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(mode==='pinch'&&pts.size>=2){
+    const [p1,p2]=[...pts.values()],m=mid(p1,p2);
+    zs=Math.max(1,Math.min(4,g.s0*dist(p1,p2)/g.d0));
+    zx=g.x0*(zs/g.s0)+(m.x-g.m0.x);zy=g.y0*(zs/g.s0)+(m.y-g.m0.y);
+    clampPan();applyZoom(false);
+  }else if(mode==='pan'){
+    zx=g.x0+(e.clientX-g.x);zy=g.y0+(e.clientY-g.y);clampPan();applyZoom(false);
+  }else if(mode==='swipe'){
+    g.dx=e.clientX-g.x;
+    lbFrame.style.transform=`translateX(${g.dx}px) rotate(${g.dx/60}deg)`;
+    lbFrame.style.opacity=String(Math.max(.4,1-Math.abs(g.dx)/700));
+  }
 });
-function endDrag(e){
-  if(!drag||e.pointerId!==drag.id)return;
-  const dx=drag.dx,fast=Math.abs(dx)/(performance.now()-drag.t)>.5;drag=null;lbStage.classList.remove('dragging');
-  lbFrame.style.transition='transform .25s ease, opacity .25s ease';
-  if(Math.abs(dx)>80||(fast&&Math.abs(dx)>30)){
-    const dir=dx<0?1:-1;
-    lbFrame.style.transform=`translateX(${-dir*60}px)`;lbFrame.style.opacity='0';
-    setTimeout(()=>{lbFrame.style.transition='none';lbFrame.style.transform='';lbFrame.style.opacity='';showLb(lbI+dir,dir)},180);
-  }else{lbFrame.style.transform='';lbFrame.style.opacity=''}
+function endPointer(e){
+  if(!pts.has(e.pointerId))return;
+  pts.delete(e.pointerId);
+  if(mode==='pinch'){
+    if(pts.size===1){const [p]=[...pts.values()];mode=zs>1?'pan':null;g={x:p.x,y:p.y,x0:zx,y0:zy}}
+    else if(pts.size===0){mode=null;if(zs<1.05)resetZoom(true)}
+    return;
+  }
+  if(pts.size)return;
+  lbStage.classList.remove('dragging');
+  if(mode==='swipe'){
+    const dx=g.dx,fast=Math.abs(dx)/(performance.now()-g.t)>.5;
+    lbFrame.style.transition='transform .25s ease, opacity .25s ease';
+    if(Math.abs(dx)>80||(fast&&Math.abs(dx)>30)){
+      const dir=dx<0?1:-1;
+      lbFrame.style.transform=`translateX(${-dir*60}px)`;lbFrame.style.opacity='0';
+      setTimeout(()=>{lbFrame.style.transition='none';lbFrame.style.transform='';lbFrame.style.opacity='';showLb(lbI+dir,dir)},180);
+    }else{lbFrame.style.transform='';lbFrame.style.opacity=''}
+  }
+  mode=null;
 }
-lbStage.addEventListener('pointerup',endDrag);
-lbStage.addEventListener('pointercancel',endDrag);
+lbStage.addEventListener('pointerup',endPointer);
+lbStage.addEventListener('pointercancel',endPointer);
+lbStage.addEventListener('dblclick',e=>{if(e.target.closest('button'))return;if(zs>1)resetZoom(true);else{zs=2.2;zx=0;zy=0;applyZoom(true)}});
 window.addEventListener('hashchange',()=>{if(!lb.hidden){lb.hidden=true;document.body.style.overflow=''}render()});
 render();
 </script>
