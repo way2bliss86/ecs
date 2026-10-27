@@ -680,20 +680,21 @@ function openLb(a,i){
   document.getElementById('lbTitle').textContent=a.t;document.getElementById('lbDate').textContent=a.d;document.getElementById('lbTot').textContent=String(a.photos.length).padStart(2,'0');
   lbThumbs.innerHTML=a.photos.map((p,n)=>`<button data-i="${n}" aria-label="사진 ${n+1}"><img src="${p.src}" alt=""></button>`).join('');
   lbThumbs.querySelectorAll('button').forEach(b=>b.onclick=()=>showLb(+b.dataset.i));
-  lb.hidden=false;document.body.style.overflow='hidden';showLb(i);document.getElementById('lbClose').focus();
+  lb.hidden=false;document.body.style.overflow='hidden';showLb(i);requestAnimationFrame(fitLb);if(document.fonts)document.fonts.ready.then(fitLb);document.getElementById('lbClose').focus();
 }
 const isTouchUI=()=>innerWidth<=620||matchMedia('(hover:none) and (pointer:coarse)').matches;
 let lbOff=0;                               // vertical offset of the photo area centre from the screen centre
 function fitLb(){
   if(!lbAlbum)return;const p=lbAlbum.photos[lbI],touch=isTouchUI();
-  const topH=lb.querySelector('.lb-top').offsetHeight,botH=lb.querySelector('.lb-bottom').offsetHeight;
-  const gap=touch?0:16;
-  // photo area = space between the top bar and the bottom strip (and between the arrows on desktop)
+  // photo area: from just below the date line to just above the progress bar (and between the arrows on desktop)
+  const gap=touch?14:18;
+  const top=document.getElementById('lbDate').getBoundingClientRect().bottom+gap;
+  const bottom=lb.querySelector('.lb-prog').getBoundingClientRect().top-gap;
   const W=touch?innerWidth:Math.min(innerWidth-2*(Math.max(20,innerWidth*.03)+76),1200);
-  const H=Math.max(120,innerHeight-topH-botH-2*gap);
+  const H=Math.max(120,bottom-top);
   let s=Math.min(W/p.w,H/p.h);if(!touch)s=Math.min(s,1.5);
   lbImg.style.width=Math.round(p.w*s)+'px';lbImg.style.height=Math.round(p.h*s)+'px';
-  lbOff=(topH-botH)/2;lb.querySelector('.lb-fig').style.marginTop=(topH-botH)+'px';
+  lbOff=(top+bottom)/2-innerHeight/2;lb.querySelector('.lb-fig').style.marginTop=(2*lbOff)+'px';
 }
 function showLb(i,dir){
   const N=lbAlbum.photos.length;lbI=(i+N)%N;const p=lbAlbum.photos[lbI];
