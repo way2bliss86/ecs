@@ -46,10 +46,10 @@ header.gnb{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .brand-txt small{font-size:10.5px;font-weight:700;letter-spacing:.02em;opacity:.9}
 .brand-txt strong{font-size:27px;font-weight:900;letter-spacing:-.04em;margin:3px 0 2px}
 .brand-txt em{font-style:normal;font-family:var(--f-latin);font-weight:600;font-size:12.5px;letter-spacing:.2em}
-.menu{display:flex;flex:1;justify-content:center;gap:4px;height:100%}
+.menu{display:flex;flex:1;justify-content:center;gap:0;height:100%;min-width:0}
 .menu>li{list-style:none;height:100%}
-.menu>li>a{display:flex;align-items:center;height:100%;padding:0 22px;font-size:18px;font-weight:700;position:relative}
-.menu>li>a::after{content:"";position:absolute;left:22px;right:22px;bottom:-1px;height:3px;background:var(--accent);transform:scaleX(0);transition:transform .25s}
+.menu>li>a{display:flex;align-items:center;justify-content:center;height:100%;padding:0 8px;font-size:18px;font-weight:700;position:relative;white-space:nowrap}
+.menu>li>a::after{content:"";position:absolute;left:24%;right:24%;bottom:-1px;height:3px;background:var(--accent);transform:scaleX(0);transition:transform .25s}
 .menu>li:hover>a::after,.menu>li>a.on::after{transform:scaleX(1)}
 .menu>li:hover>a{color:var(--navy)}
 ul.menu{margin:0;padding:0}
@@ -66,14 +66,13 @@ ul.menu{margin:0;padding:0}
 /* mega menu */
 .mega{position:absolute;left:0;right:0;top:100%;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 18px 30px -18px rgba(10,30,60,.25);visibility:hidden;opacity:0;transform:translateY(-6px);transition:.2s}
 header.gnb.open-mega .mega{visibility:visible;opacity:1;transform:none}
-.mega-in{display:grid;grid-template-columns:240px repeat(5,1fr);gap:24px;padding-block:32px 36px}
-.mega-intro{border-right:1px solid var(--line);padding-right:24px}
-.mega-intro h3{font-size:20px;color:var(--navy);margin:6px 0 10px}
-.mega-intro p{font-size:14px;color:var(--muted);margin:0}
-.mega-col h4{margin:0 0 12px;font-size:16px;color:var(--navy);padding-bottom:10px;border-bottom:2px solid var(--navy)}
-.mega-col ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.mega-col a{font-size:14.5px;color:var(--muted)}
-.mega-col a:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.menu>li{position:relative;z-index:2;flex:0 1 150px;min-width:0}
+.sub{position:absolute;top:100%;left:0;width:100%;margin:0;padding:22px 10px 26px;text-align:center;list-style:none;display:grid;align-content:start;gap:11px;visibility:hidden;opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s,visibility .2s,background .2s;border-radius:0 0 14px 14px}
+header.gnb.open-mega .sub{visibility:visible;opacity:1;transform:none}
+.menu>li:hover .sub,.menu>li:focus-within .sub{background:var(--sky-warm)}
+.sub a{font-size:15px;color:var(--muted);display:block;line-height:1.4;word-break:keep-all}
+.sub a:hover,.sub a:focus-visible{color:var(--navy);font-weight:700}
+.mega{z-index:1}
 
 /* mobile drawer */
 .drawer{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -358,12 +357,10 @@ td.num{font-family:var(--f-latin);font-size:16px;font-variant-numeric:tabular-nu
 @keyframes inL{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
 /* ---------- responsive ---------- */
 @media (max-width:1100px){
-  .menu>li>a{padding:0 14px;font-size:16.5px}
-  .menu>li>a::after{left:14px;right:14px}
+  .menu>li>a{font-size:16.5px}
   .news-grid{grid-template-columns:1fr 1fr}
   .cal{grid-column:span 2}
-  .mega-in{grid-template-columns:repeat(5,1fr)}
-  .mega-intro{display:none}
+  .sub{padding:20px 6px 24px}.sub a{font-size:14px}
 }
 @media (max-width:900px){
   .menu,.cta-row.top,.mega{display:none}
@@ -451,7 +448,7 @@ a.vcard:hover .vplay,.vplayer-btn:hover .vplay{transform:translate(-50%,-50%) sc
     </div>
     <button class="hamb" id="hamb" aria-label="전체 메뉴 열기"><span></span></button>
   </div>
-  <div class="mega" id="mega"><div class="wrap mega-in" id="megaIn"></div></div>
+  <div class="mega" id="mega" aria-hidden="true"></div>
 </header>
 
 <div class="drawer" id="drawer" hidden>
@@ -512,16 +509,19 @@ const SITE=[
 const find=t=>{for(const s of SITE){const i=s.items.find(x=>x[0]===t);if(i)return{sec:s,item:i}}return null};
 
 /* ----- nav build ----- */
-const menu=document.getElementById('menu'),megaIn=document.getElementById('megaIn'),dm=document.getElementById('drawerMenu'),gnb=document.getElementById('gnb');
-menu.innerHTML=SITE.map(s=>`<li><a href="#${s.items[0][0]}" data-sec="${s.id}">${s.name}</a></li>`).join('');
-megaIn.innerHTML=`<div class="mega-intro"><span class="eyebrow">Everlove</span><h3>하나님의 사랑으로<br>자라는 학교</h3><p>늘사랑기독학교의 모든 메뉴를 한눈에 살펴보세요.</p></div>`+
- SITE.map(s=>`<div class="mega-col"><h4>${s.name}</h4><ul>${s.items.map(i=>`<li><a href="#${i[0]}">${i[1]}</a></li>`).join('')}</ul></div>`).join('');
+const menu=document.getElementById('menu'),dm=document.getElementById('drawerMenu'),gnb=document.getElementById('gnb');
+menu.innerHTML=SITE.map(s=>`<li><a href="#${s.items[0][0]}" data-sec="${s.id}">${s.name}</a><ul class="sub">${s.items.map(i=>`<li><a href="#${i[0]}">${i[1]}</a></li>`).join('')}</ul></li>`).join('');
 dm.innerHTML=SITE.map(s=>`<details><summary>${s.name}</summary><ul>${s.items.map(i=>`<li><a href="#${i[0]}">${i[1]}</a></li>`).join('')}</ul></details>`).join('');
 let megaT;
-const openMega=()=>{clearTimeout(megaT);gnb.classList.add('open-mega')},closeMega=()=>{megaT=setTimeout(()=>gnb.classList.remove('open-mega'),120)};
+const mega=document.getElementById('mega');
+function sizeMega(){            // background panel and every column share the height of the longest sub-menu
+  const subs=[...menu.querySelectorAll('.sub')];subs.forEach(s=>s.style.minHeight='');
+  const h=Math.max(...subs.map(s=>s.offsetHeight));subs.forEach(s=>s.style.minHeight=h+'px');mega.style.height=h+'px';
+}
+const openMega=()=>{clearTimeout(megaT);if(!gnb.classList.contains('open-mega')){sizeMega();gnb.classList.add('open-mega')}},closeMega=()=>{megaT=setTimeout(()=>gnb.classList.remove('open-mega'),120)};
 menu.addEventListener('mouseenter',openMega);menu.addEventListener('mouseleave',closeMega);
-document.getElementById('mega').addEventListener('mouseenter',openMega);document.getElementById('mega').addEventListener('mouseleave',closeMega);
-menu.addEventListener('focusin',openMega);megaIn.addEventListener('focusout',e=>{if(!gnb.contains(e.relatedTarget))closeMega()});
+mega.addEventListener('mouseenter',openMega);mega.addEventListener('mouseleave',closeMega);
+menu.addEventListener('focusin',openMega);menu.addEventListener('focusout',e=>{if(!menu.contains(e.relatedTarget))closeMega()});
 const drawer=document.getElementById('drawer');
 document.getElementById('hamb').onclick=()=>{drawer.hidden=false};
 document.getElementById('closeDrawer').onclick=()=>{drawer.hidden=true};
@@ -620,7 +620,7 @@ function albumPage(a){
 
 /* ----- video gallery (YouTube) ----- */
 const VIDEOS=[
- {id:'video-1',yt:'87HloJbZ5T0',t:'유튜브 연동 샘플 영상',d:'2026.10.27',p:'유튜브에 올린 학교 영상을 홈페이지에서 함께 볼 수 있습니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
+ {id:'video-1',yt:'qyF6Ic-oJfM',t:'유튜브 연동 샘플 영상',d:'2026.10.27',p:'유튜브에 올린 학교 영상을 홈페이지에서 함께 볼 수 있습니다. 영상 제목과 소개 글은 실제 내용으로 바꿔 주세요.'},
 ];
 // The artifact preview cannot embed other sites, so there the player opens YouTube in a new tab.
 // On the school's own website the same button plays the video in place.
